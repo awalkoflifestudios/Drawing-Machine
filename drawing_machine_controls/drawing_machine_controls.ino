@@ -121,8 +121,9 @@ void respond_to_command() {
   boolean is_move_command = false;
   int command = 0;
 
-  if (millis() - command_expire > CommandTimeout) {
+  if (command_expire != 0 && millis() - command_expire > CommandTimeout) {
     command = 'S';
+    command_expire = 0; // don't expire until command_expire is set to something
   }
 
   if (Serial.available() > 0 ) {
