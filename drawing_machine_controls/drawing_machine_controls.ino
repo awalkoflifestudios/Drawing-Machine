@@ -1,12 +1,10 @@
 /*
     Arduino side that Python sends commands to
-
   This is a test sketch for the Adafruit assembled Motor Shield for Arduino v2
   It won't work with v1.x motor shields! Only for the v2's with built in PWM
   control
-
   For use with the Adafruit Motor Shield v2
-  ---->	http://www.adafruit.com/products/1438
+  ---->  http://www.adafruit.com/products/1438
 */
 
 #include <Wire.h>
@@ -25,11 +23,11 @@ Adafruit_DCMotor *right_motor = AFMS.getMotor(1);
 
 const int CommandTimeout = 1000; // if no new command in this amount of time, go to 'N'
 
-boolean no_go = false;
 int current_left = 0;
 int current_right = 0;
 int target_left = 0;
 int target_right = 0;
+
 int front_left_sensor = A0;
 int back_left_sensor = A1;
 int front_right_sensor = A3;
@@ -61,12 +59,14 @@ void loop() {
 }
 
 void stop_left() {
+  Serial.println("Stopleft");
   left_motor->setSpeed(0);
   current_left = 0;
   target_left = 0;
 }
 
 void stop_right() {
+  Serial.println("Stoprigth");
   right_motor->setSpeed(0);
   current_right = 0;
   target_right = 0;
@@ -96,33 +96,23 @@ void stop_at_edge() {
     stop_right();
   }
 
+  // going back, stop on any
   if ( ( back_left_obstacle || back_right_obstacle ) && ( current_right < 0 || current_left < 0 ) ) {
-    right_motor->setSpeed(0);
-    left_motor->setSpeed(0);
-    current_right = 0;
-    target_right = 0;
-    current_left = 0;
-    target_left = 0;
+    stop_left();
+    stop_right();
   }
-  if ( front_left_obstacle || front_right_obstacle || back_left_obstacle || back_right_obstacle ) {
-    /*
-    Serial.print( front_left_obstacle ); Serial.print( "L " );
-    Serial.print( front_right_obstacle ); Serial.print( "R " );
-    Serial.print( back_left_obstacle ); Serial.print( "l " );
-    Serial.print( back_right_obstacle ); Serial.print( "r " );
-    Serial.println();
-    */
-  }
+
 }
 
 void respond_to_command() {
-  static unsigned int command_expire = 0; // start expired (before you do anything) // like a global
+  static unsigned long command_expire = 0; // start expired (before you do anything) // like a global
 
   boolean is_move_command = false;
   int command = 0;
 
   if (command_expire != 0 && millis() - command_expire > CommandTimeout) {
     command = 'S';
+    Serial.print("Expired ");Serial.println(millis());
     command_expire = 0; // don't expire until command_expire is set to something
   }
 
@@ -171,26 +161,30 @@ void respond_to_command() {
         ;
     }
 
-
     if (is_move_command) {
+      // reset expiration at each command
       command_expire = millis();
+      // Serial.print("Expire at ");Serial.println(command_expire);
     }
+
     if (command != 'S') {
-      Serial.print("Command "); Serial.print(command);
-      Serial.print(" "); Serial.print(target_left);
-      Serial.print("/"); Serial.print(target_right);
+      Serial.print("Command "); Serial.print((char)command);
+      Serial.print(" "); Serial.print(current_left); Serial.print("|"); Serial.print(target_left);
+      Serial.print("/"); Serial.print(current_right); Serial.print("|"); Serial.print(target_right);
       Serial.println();
     }
 
   }
 
-  // else keep changing till we get to the target l/r
-  //remeber current
+  // keep changing till we get to the target l/r
+  // remeMber current
   //change towards new target
   if (current_left < target_left) {
+    // Serial.print("+L");
     current_left = current_left + 1;
   }
   else if (current_left > target_left) {
+    // Serial.print("-L");
     current_left = current_left - 1;
   }
   //if it is equal it will keep doing, dont need to code
@@ -204,9 +198,11 @@ void respond_to_command() {
   left_motor->setSpeed(abs(current_left));
 
   if (current_right < target_right) {
+    // Serial.print("+R");
     current_right = current_right + 1;
   }
   else if (current_right > target_right) {
+    // Serial.print("-R");
     current_right = current_right - 1;
   }
   //if it is equal it will keep doing, dont need to code
@@ -214,7 +210,6 @@ void respond_to_command() {
   if (current_right <= 0) {
     right_motor->run(BACKWARD);
   }
-
   else if (current_right >= 0) {
     right_motor->run(FORWARD);
   }
@@ -222,11 +217,8 @@ void respond_to_command() {
   right_motor->setSpeed(abs(current_right));
 
   if (current_left != target_left || current_right != target_right) {
-    Serial.print(current_left); Serial.print("/"); Serial.print(current_right); Serial.println();
+    // Serial.print(current_left); Serial.print("/"); Serial.print(current_right); Serial.println();
   }
 
 
 }
-
-
-
