@@ -50,5 +50,5 @@ while (1):
     serial_port.write(c)
     print "'%c'" % c,ord(c)
 
-    if serial_port.in_waiting() > 0:
-        print serial_port.read( serial_port.in_waiting() )
+    if serial_port.in_waiting > 0:
+        print serial_port.read( serial_port.in_waiting )
