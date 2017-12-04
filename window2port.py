@@ -44,6 +44,11 @@ while (1):
     c = getchar()
     if c == '\x03':
         exit(0)
-    elif ord(c) != 255: # windows returns 255 for "no char"
-        serial_port.write(c)
-        print "'%c'" % c,ord(c)
+    elif ord(c) == 255: # windows returns 255 for "no char"
+        print "Don't run this in IDLE, run from command.exe";
+
+    serial_port.write(c)
+    print "'%c'" % c,ord(c)
+
+    if serial_port.in_waiting() > 0:
+        print serial_port.read( serial_port.in_waiting() )
